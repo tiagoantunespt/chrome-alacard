@@ -4,6 +4,8 @@ var alacardExtension = {
 
     options: {},
 
+    key: null,
+
     init: function(callback){
 
         var remoteURL = "https://www.alacard.pt/jsp/portlet/consumer/cartao_refeicao/c_login.jsp";
@@ -13,29 +15,31 @@ var alacardExtension = {
                 var html = request.responseText;
                 var doc = document.createElement("html");
                 doc.innerHTML = html;
-                var key = doc.getElementsByTagName("input")[1].value;
-                var action = doc.getElementsByTagName("form")[0].getAttribute('action');
-                chrome.cookies.get({url:"https://www.alacard.pt", name:"sess"},
-                    function(value) {
-                        remoteURL = 'https://www.alacard.pt/jsp/portlet/consumer/cartao_refeicao/c_login.jsp?_portal=cartao_refeicao&share/key.jsp:KEY='+key+'&consumer/cartao_refeicao/c_login.jsp:login_id_form='+alacardExtension.options.cardNumber+'&consumer/cartao_refeicao/c_login.jsp:password_form='+alacardExtension.options.password+'&x=40&y=14&consumer/cartao_refeicao/c_login.jsp:submit=not_empty';
-                        alacardExtension.sendRequest('POST', remoteURL, handleSecondPhase);
-                    }
-                );
+                alacardExtension.key = doc.getElementsByTagName("input")[1].value;
+                callback();
             }
             else{
                console.log("Erro no servidor!");
             }
         };
 
+        
+
+        alacardExtension.sendRequest('GET', remoteURL, handleFirstPhase);
+    },
+
+    getDom: function(){
         var handleSecondPhase = function(request){
             if(request){
+                console.log(request.responseText);
                 alacardExtension.dom = document.createElement('div');
                 alacardExtension.dom.innerHTML = request.responseText;
                 callback();
             }else console.log('erro');
         };
 
-        alacardExtension.sendRequest('GET', remoteURL, handleFirstPhase);
+        remoteURL = 'https://www.alacard.pt/jsp/portlet/consumer/cartao_refeicao/c_login.jsp?_portal=cartao_refeicao&share/key.jsp:KEY='+key+'&consumer/cartao_refeicao/c_login.jsp:login_id_form='+alacardExtension.options.cardNumber+'&consumer/cartao_refeicao/c_login.jsp:password_form='+alacardExtension.options.password+'&x=40&y=14&consumer/cartao_refeicao/c_login.jsp:submit=not_empty';
+        alacardExtension.sendRequest('POST', remoteURL, handleSecondPhase);
     },
 
     getBalance: function(){
@@ -50,10 +54,8 @@ var alacardExtension = {
         request.open(method, url, true);
 
         request.onreadystatechange = function(){
-            if (request.status == 200){
+            if (request.readyState == 4 && request.status == 200){
                 callback(request);
-            }else{
-                callback(false);
             }
         }
         request.send();        
@@ -103,8 +105,8 @@ function getElementByClass(className, html) {
 };
 
 document.addEventListener('DOMContentLoaded', function(){
-    document.getElementById("balance_placeholder").innerHTML = 'a carregar';//'<img src="../img/loader.gif" alt="loading"/>';
-
+    document.getElementById("balance_placeholder").innerHTML = '';//'<img src="../img/loader.gif" alt="loading"/>';
+    
     var logoutBtn = document.getElementById("logout");    
     logoutBtn.addEventListener('click', function(){
         alacardExtension.logout(function(){
@@ -113,11 +115,40 @@ document.addEventListener('DOMContentLoaded', function(){
     });
 
     var initHandler = function(){
-        var balance = alacardExtension.getBalance();
-        document.getElementById('balance_placeholder').innerHTML = balance ? balance : 'erro';
+        document.getElementById('form_key').value = alacardExtension.key;
+        document.getElementById('form').onsubmit = function(){
+
+            var card = document.getElementById('cardnumber').value;
+            var pass = document.getElementById('password').value;
+
+            document.getElementById("form_card").value = card;
+            document.getElementById("form_password").value = pass;
+
+            var submitForm = function(e){
+                console.log('lol');
+                e.preventDefault();
+                /*alacardExtension.saveOptions(card, pass, function(){
+
+                    alacardExtension.checkLogin(loginHandler);
+                })*/
+                console.log('lol');
+                return false;
+            }
+
+            var form = document.getElementById('alacard_form');
+
+            form.addEventListener('submit', submitForm, false);   
+            form.submit();
+            /*alacardExtension.saveOptions(card, pass, function(){
+                alacardExtension.checkLogin(loginHandler);
+            });*/
+            return false;
+        };
     }
 
-    var loginHandler = function(logged){
+    alacardExtension.init(initHandler);
+
+    /*var loginHandler = function(logged){
         if(logged){            
             logoutBtn.style.display = "block"; //hide logout button
             alacardExtension.init(initHandler);
@@ -126,15 +157,7 @@ document.addEventListener('DOMContentLoaded', function(){
         }
     }
 
-    alacardExtension.checkLogin(loginHandler);
+    alacardExtension.checkLogin(loginHandler);*/
 
-    document.getElementById('form').onsubmit = function(){
-        document.getElementById("balance_placeholder").innerHTML = 'a carregar';
-        var card = document.getElementById('cardnumber').value;
-        var pass = document.getElementById('password').value;
-        alacardExtension.saveOptions(card, pass, function(){
-            alacardExtension.checkLogin(loginHandler);
-        });
-        return false;
-    };
+    
 });
