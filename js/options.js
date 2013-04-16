@@ -1,3 +1,28 @@
+/**
+ * chrome-alacard extension
+ *
+ * Copyright (c) 2013 lxpixel.com
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, inclu * ding without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+ * of the Software, and to permit persons to whom the Software is furnished to do so,
+ * subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+ * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+ * OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+"use strict";
+
 (function(){
 
     function saveOptions(options){
@@ -43,13 +68,19 @@
                 saveOptions(options);
             });
 
-            var saveButton = document.getElementById('save_options_btn');
+            var saveButton = document.getElementById('save_options_btn'),
+                closeButton = document.getElementById('close_options_btn');
+
+            closeButton.addEventListener('click', function(){
+                window.close();
+            });
+
             saveButton.addEventListener('click', function(){
                 var status = document.getElementById('status');
 
                 if (cardNumber.value.length < 1 || cardPassword.value.length < 1){
                     status.innerHTML = 'Preencha os dois campos de autenticação';
-                    status.style.color = 'red';
+                    status.className = 'error';
                     status.style.visibility = 'visible';
                     return false;
                 }
@@ -60,8 +91,9 @@
                     options.updateInterval = updateInterval.value;
                     saveOptions(options);
                     status.innerHTML = '<span class="icon"></span>Dados guardados com sucesso';
-                    status.style.color = 'white';
                     status.style.visibility = 'visible';
+                    status.className = 'ok';
+                    logoutButton.style.display = 'block';
                 }
             });
         });
